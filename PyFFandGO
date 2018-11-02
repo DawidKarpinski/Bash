@@ -1,0 +1,51 @@
+#!/bin/bash
+
+#Tworzy listę list z funkcjami z plików
+listfunc()
+{
+	declare -i "i"="0"
+	for file in $@; do
+		local temp=$(grep -n '\<def *' $file)
+		temp2=($(echo $temp | sed 's/: def/:def/g' | sed -e 's/ /_/g' | sed 's/:_/: /g'))
+		for num in ${!temp2[*]}; do
+			temp2[$num]="Nr:$num:Ln:${temp2[$num]}"
+		done
+		temp2="${temp2[@]}"
+		magic_arg="MAGIC_ARG_$RANDOM"
+		declare -g "$magic_arg"="$temp2"
+		magic_list[$i]=$magic_arg
+		i+=1
+		
+	done
+}
+
+findallfile()
+{
+	if [ -d $1 ] ; then
+		list=$(find $1 -name '*py')	
+		eval $list
+	else
+		list=$1
+	fi
+}
+
+findallfile $1 
+listfunc $list
+echo Hello $list
+file_list=($list)
+for num in ${!file_list[*]}; do
+	temp=${!magic_list[$num]}
+	echo "::$num::${file_list[$num]}: ${temp[@]}"
+	done
+echo "Czy przejść do pliku y/n"
+read answer
+if [ "$answer" == "y" ]; then
+	echo "Podaj nr. pliku:"
+	read answer
+	echo "podaj nr. funkcji:"
+	read linia
+	temp="${!magic_list[$answer]}"
+	temp2=($(echo $temp | sed 's/: def/:def/g' | sed -e 's/ /_/g' | sed 's/:_/: /g'))
+	temp=${temp2[$linia]}
+	gedit +${temp::1} ${file_list[$answer]}
+fi
